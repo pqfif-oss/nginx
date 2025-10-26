@@ -1,0 +1,28 @@
+Description: Add Ubuntu token to NGINX_VER
+Author: Adam Conrad <adconrad@ubuntu.com>
+Forwarded: not-needed
+Last-Update: 2022-06-08
+
+---
+ src/core/nginx.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/core/nginx.h
++++ b/src/core/nginx.h
+@@ -22,5 +22,16 @@
+ #define NGINX_VAR          "NGINX"
+ #define NGX_OLDPID_EXT     ".oldbin"
+ 
++/* Update versions for Ubuntu branding */
++#undef NGINX_VER
++#undef NGINX_VER_BUILD
++
++#define NGINX_VER          "nginx/" NGINX_VERSION " (Ubuntu)"
++
++#ifdef NGX_BUILD
++#define NGINX_VER_BUILD    NGINX_VER " (" NGX_BUILD ")"
++#else
++#define NGINX_VER_BUILD    NGINX_VER
++#endif
+ 
+ #endif /* _NGINX_H_INCLUDED_ */

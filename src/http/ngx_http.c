@@ -72,7 +72,6 @@ ngx_uint_t   ngx_http_max_module;
 
 
 ngx_http_output_header_filter_pt  ngx_http_top_header_filter;
-ngx_http_output_header_filter_pt  ngx_http_top_early_hints_filter;
 ngx_http_output_body_filter_pt    ngx_http_top_body_filter;
 ngx_http_request_body_filter_pt   ngx_http_top_request_body_filter;
 
@@ -1201,10 +1200,7 @@ ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     port = cmcf->ports->elts;
     for (i = 0; i < cmcf->ports->nelts; i++) {
 
-        if (p != port[i].port
-            || lsopt->type != port[i].type
-            || sa->sa_family != port[i].family)
-        {
+        if (p != port[i].port || sa->sa_family != port[i].family) {
             continue;
         }
 
@@ -1221,7 +1217,6 @@ ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     }
 
     port->family = sa->sa_family;
-    port->type = lsopt->type;
     port->port = p;
     port->addrs.elts = NULL;
 
@@ -1241,9 +1236,6 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 #endif
 #if (NGX_HTTP_V2)
     ngx_uint_t             http2;
-#endif
-#if (NGX_HTTP_V3)
-    ngx_uint_t             quic;
 #endif
 
     /*
@@ -1285,9 +1277,6 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
         http2 = lsopt->http2 || addr[i].opt.http2;
         protocols |= lsopt->http2 << 2;
         protocols_prev |= addr[i].opt.http2 << 2;
-#endif
-#if (NGX_HTTP_V3)
-        quic = lsopt->quic || addr[i].opt.quic;
 #endif
 
         if (lsopt->set) {
@@ -1375,9 +1364,6 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 #endif
 #if (NGX_HTTP_V2)
         addr[i].opt.http2 = http2;
-#endif
-#if (NGX_HTTP_V3)
-        addr[i].opt.quic = quic;
 #endif
 
         return NGX_OK;
@@ -1845,7 +1831,6 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
     }
 #endif
 
-    ls->type = addr->opt.type;
     ls->backlog = addr->opt.backlog;
     ls->rcvbuf = addr->opt.rcvbuf;
     ls->sndbuf = addr->opt.sndbuf;
@@ -1881,12 +1866,6 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
     ls->reuseport = addr->opt.reuseport;
 #endif
 
-    ls->wildcard = addr->opt.wildcard;
-
-#if (NGX_HTTP_V3)
-    ls->quic = addr->opt.quic;
-#endif
-
     return ls;
 }
 
@@ -1918,9 +1897,6 @@ ngx_http_add_addrs(ngx_conf_t *cf, ngx_http_port_t *hport,
 #endif
 #if (NGX_HTTP_V2)
         addrs[i].conf.http2 = addr[i].opt.http2;
-#endif
-#if (NGX_HTTP_V3)
-        addrs[i].conf.quic = addr[i].opt.quic;
 #endif
         addrs[i].conf.proxy_protocol = addr[i].opt.proxy_protocol;
 
@@ -1986,9 +1962,6 @@ ngx_http_add_addrs6(ngx_conf_t *cf, ngx_http_port_t *hport,
 #endif
 #if (NGX_HTTP_V2)
         addrs6[i].conf.http2 = addr[i].opt.http2;
-#endif
-#if (NGX_HTTP_V3)
-        addrs6[i].conf.quic = addr[i].opt.quic;
 #endif
         addrs6[i].conf.proxy_protocol = addr[i].opt.proxy_protocol;
 

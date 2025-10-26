@@ -10,11 +10,6 @@
 #include <ngx_http.h>
 
 
-#define NGX_HTTP_HEADERS_INHERIT_OFF    0
-#define NGX_HTTP_HEADERS_INHERIT_ON     1
-#define NGX_HTTP_HEADERS_INHERIT_MERGE  2
-
-
 typedef struct ngx_http_header_val_s  ngx_http_header_val_t;
 
 typedef ngx_int_t (*ngx_http_set_header_pt)(ngx_http_request_t *r,
@@ -54,8 +49,6 @@ typedef struct {
     ngx_http_complex_value_t  *expires_value;
     ngx_array_t               *headers;
     ngx_array_t               *trailers;
-    ngx_uint_t                 headers_inherit;
-    ngx_uint_t                 trailers_inherit;
 } ngx_http_headers_conf_t;
 
 
@@ -104,14 +97,6 @@ static ngx_http_set_header_t  ngx_http_set_headers[] = {
 };
 
 
-static ngx_conf_enum_t  ngx_http_headers_inherit[] = {
-    { ngx_string("off"),   NGX_HTTP_HEADERS_INHERIT_OFF },
-    { ngx_string("on"),    NGX_HTTP_HEADERS_INHERIT_ON },
-    { ngx_string("merge"), NGX_HTTP_HEADERS_INHERIT_MERGE },
-    { ngx_null_string, 0 }
-};
-
-
 static ngx_command_t  ngx_http_headers_filter_commands[] = {
 
     { ngx_string("expires"),
@@ -137,22 +122,6 @@ static ngx_command_t  ngx_http_headers_filter_commands[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_headers_conf_t, trailers),
       NULL },
-
-    { ngx_string("add_header_inherit"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
-                        |NGX_CONF_TAKE1,
-      ngx_conf_set_enum_slot,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_headers_conf_t, headers_inherit),
-      &ngx_http_headers_inherit },
-
-    { ngx_string("add_trailer_inherit"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
-                        |NGX_CONF_TAKE1,
-      ngx_conf_set_enum_slot,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_headers_conf_t, trailers_inherit),
-      &ngx_http_headers_inherit },
 
       ngx_null_command
 };
@@ -688,8 +657,6 @@ ngx_http_headers_create_conf(ngx_conf_t *cf)
      */
 
     conf->expires = NGX_HTTP_EXPIRES_UNSET;
-    conf->headers_inherit = NGX_CONF_UNSET;
-    conf->trailers_inherit = NGX_CONF_UNSET;
 
     return conf;
 }
@@ -701,8 +668,6 @@ ngx_http_headers_merge_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_headers_conf_t *prev = parent;
     ngx_http_headers_conf_t *conf = child;
 
-    ngx_http_header_val_t  *hv;
-
     if (conf->expires == NGX_HTTP_EXPIRES_UNSET) {
         conf->expires = prev->expires;
         conf->expires_time = prev->expires_time;
@@ -713,43 +678,12 @@ ngx_http_headers_merge_conf(ngx_conf_t *cf, void *parent, void *child)
         }
     }
 
-    ngx_conf_merge_uint_value(conf->headers_inherit, prev->headers_inherit,
-                              NGX_HTTP_HEADERS_INHERIT_ON);
-    ngx_conf_merge_uint_value(conf->trailers_inherit, prev->trailers_inherit,
-                              NGX_HTTP_HEADERS_INHERIT_ON);
-
-    if (conf->headers_inherit != NGX_HTTP_HEADERS_INHERIT_OFF
-        && prev->headers)
-    {
-        if (conf->headers == NULL) {
-            conf->headers = prev->headers;
-
-        } else if (conf->headers_inherit == NGX_HTTP_HEADERS_INHERIT_MERGE) {
-            hv = ngx_array_push_n(conf->headers, prev->headers->nelts);
-            if (hv == NULL) {
-                return NGX_CONF_ERROR;
-            }
-
-            ngx_memcpy(hv, prev->headers->elts,
-                       sizeof(ngx_http_header_val_t) * prev->headers->nelts);
-        }
+    if (conf->headers == NULL) {
+        conf->headers = prev->headers;
     }
 
-    if (conf->trailers_inherit != NGX_HTTP_HEADERS_INHERIT_OFF
-        && prev->trailers)
-    {
-        if (conf->trailers == NULL) {
-            conf->trailers = prev->trailers;
-
-        } else if (conf->trailers_inherit == NGX_HTTP_HEADERS_INHERIT_MERGE) {
-            hv = ngx_array_push_n(conf->trailers, prev->trailers->nelts);
-            if (hv == NULL) {
-                return NGX_CONF_ERROR;
-            }
-
-            ngx_memcpy(hv, prev->trailers->elts,
-                       sizeof(ngx_http_header_val_t) * prev->trailers->nelts);
-        }
+    if (conf->trailers == NULL) {
+        conf->trailers = prev->trailers;
     }
 
     return NGX_CONF_OK;

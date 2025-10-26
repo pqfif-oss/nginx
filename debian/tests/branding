@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+version=$(dpkg-query -f='${source:Upstream-Version}' -W nginx-common)
+expected_server_string="Server: nginx/${version} (Ubuntu)"
+actual_server_string=$(curl -i localhost -s | grep ^Server: | sed 's/\r//' )
+
+echo "Installed nginx-common version: ${version}"
+echo "Server string we got from the live service: ${actual_server_string}"
+
+test "${expected_server_string}" = "${actual_server_string}"

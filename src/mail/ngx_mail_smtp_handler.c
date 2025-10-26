@@ -782,9 +782,6 @@ ngx_mail_smtp_mail(ngx_mail_session_t *s, ngx_connection_t *c)
 
     ngx_str_set(&s->out, smtp_ok);
 
-    ngx_str_null(&s->login);
-    ngx_str_null(&s->passwd);
-
     return NGX_OK;
 }
 
